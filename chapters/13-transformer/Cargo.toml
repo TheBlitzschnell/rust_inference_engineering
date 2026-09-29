@@ -1,0 +1,16 @@
+[package]
+name = "ch13-transformer"
+version = "0.1.0"
+description = "Chapter 13: a complete Llama-style transformer, as a reference implementation"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch07-threads = { path = "../07-threads" }
+ch08-operators = { path = "../08-operators" }
+ch12-attention = { path = "../12-attention" }
+
+[lints]
+workspace = true

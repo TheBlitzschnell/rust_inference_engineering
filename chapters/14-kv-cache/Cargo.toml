@@ -1,0 +1,18 @@
+[package]
+name = "ch14-kv-cache"
+version = "0.1.0"
+description = "Chapter 14: the inference engine core, with a KV cache, prefill and decode"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch06-simd = { path = "../06-simd" }
+ch07-threads = { path = "../07-threads" }
+ch08-operators = { path = "../08-operators" }
+ch12-attention = { path = "../12-attention" }
+ch13-transformer = { path = "../13-transformer" }
+
+[lints]
+workspace = true

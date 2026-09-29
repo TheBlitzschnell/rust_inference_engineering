@@ -83,6 +83,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch13-transformer"
+version = "0.1.0"
+dependencies = [
+ "ch07-threads",
+ "ch08-operators",
+ "ch12-attention",
+]
+
+[[package]]
+name = "ch14-kv-cache"
+version = "0.1.0"
+dependencies = [
+ "ch06-simd",
+ "ch07-threads",
+ "ch08-operators",
+ "ch12-attention",
+ "ch13-transformer",
+]
+
+[[package]]
 name = "crossbeam-deque"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
