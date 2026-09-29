@@ -1,0 +1,19 @@
+[package]
+name = "ch10-first-model"
+version = "0.1.0"
+description = "Chapter 10: train, save, load and serve a small classifier"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+default-run = "ch10-first-model"
+
+[dependencies]
+ch01-what-is-inference = { path = "../01-what-is-inference" }
+ch06-simd = { path = "../06-simd" }
+ch07-threads = { path = "../07-threads" }
+ch08-operators = { path = "../08-operators" }
+ch09-safetensors = { path = "../09-safetensors" }
+
+[lints]
+workspace = true

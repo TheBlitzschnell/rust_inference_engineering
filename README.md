@@ -118,7 +118,7 @@ Chapters 16 onward run SmolLM2-135M-Instruct, a 135-million-parameter chat model
 ./tools/download_model.sh 360M       # the larger sibling, used as a target in chapter 26
 ```
 
-Tests that need the model skip themselves when it is absent, so `cargo test` always works.
+Tests that need the model skip themselves when it is absent, so `cargo test` always works. To keep models somewhere else, set `INFER_MODELS` to the directory that contains the `smollm2-*` folders.
 
 ### Optional: the PyTorch reference
 
