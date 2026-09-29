@@ -74,7 +74,7 @@ Each chapter is a folder with a lesson (`README.md`) and a Rust crate you can ru
 | 26 | [Speculative decoding](chapters/26-speculative-decoding/README.md) | Draft-and-verify with greedy and rejection sampling; measured on real models |
 | 27 | [Structured output](chapters/27-structured-output/README.md) | Grammar-constrained decoding that always produces valid JSON |
 | 28 | [More than one device](chapters/28-parallelism/README.md) | Tensor, pipeline and expert parallelism, simulated with threads and all-reduce |
-| 29 | [GPUs](chapters/29-gpu/README.md) | How GPUs run inference; matmul compute shaders with `wgpu` |
+| 29 | [GPUs](chapters/29-gpu/README.md) | How GPUs run inference; CUDA kernels written in Rust with NVIDIA's [cuda-oxide](https://github.com/NVIDIA/cuda-rust) |
 | 30 | [Inference in production](chapters/30-production/README.md) | Capacity planning, layer-by-layer numerical debugging, metrics and reliability |
 
 A [glossary](GLOSSARY.md) collects every term the course defines.

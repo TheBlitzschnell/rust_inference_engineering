@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  check:
+    name: build, test, lint, lessons
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Tests
+        run: cargo test --workspace
+      - name: Lessons match the code
+        run: cargo xtask check
+
+  aarch64:
+    name: ARM NEON kernels under qemu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cross toolchain and qemu
+        run: sudo apt-get update && sudo apt-get install -y qemu-user gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+      - name: Clippy for aarch64
+        run: cargo clippy -p ch06-simd --target aarch64-unknown-linux-gnu --all-targets -- -D warnings
+      - name: Tests for aarch64
+        run: cargo test -p ch06-simd --target aarch64-unknown-linux-gnu
+
+  miri:
+    name: Miri on the unsafe code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri, rust-src
+      - name: AlignedVec
+        run: cargo +nightly miri test -p ch06-simd --lib aligned
+      - name: SpinPool
+        run: cargo +nightly miri test -p ch07-threads --lib pool::tests
+      - name: AVX2 kernels
+        run: cargo +nightly miri test -p ch06-simd --lib
+        env:
+          RUSTFLAGS: -C target-feature=+avx2,+fma

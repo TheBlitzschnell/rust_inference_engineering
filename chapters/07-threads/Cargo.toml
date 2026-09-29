@@ -1,0 +1,17 @@
+[package]
+name = "ch07-threads"
+version = "0.1.0"
+description = "Chapter 7: parallel matvec and matmul with scoped threads and rayon"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+rayon.workspace = true
+ch02-numbers = { path = "../02-numbers" }
+ch04-memory = { path = "../04-memory" }
+ch06-simd = { path = "../06-simd" }
+
+[lints]
+workspace = true
