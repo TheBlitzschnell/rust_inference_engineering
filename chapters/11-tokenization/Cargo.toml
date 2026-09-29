@@ -1,0 +1,11 @@
+[package]
+name = "ch11-tokenization"
+version = "0.1.0"
+description = "Chapter 11: byte-level BPE tokenization and streaming UTF-8 decoding"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

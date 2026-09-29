@@ -71,6 +71,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch11-tokenization"
+version = "0.1.0"
+
+[[package]]
+name = "ch12-attention"
+version = "0.1.0"
+dependencies = [
+ "ch06-simd",
+ "ch08-operators",
+]
+
+[[package]]
 name = "crossbeam-deque"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
