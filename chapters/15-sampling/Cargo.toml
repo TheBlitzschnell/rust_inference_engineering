@@ -1,0 +1,18 @@
+[package]
+name = "ch15-sampling"
+version = "0.1.0"
+description = "Chapter 15: turning logits into tokens: temperature, top-k, top-p, min-p, penalties, seeds, stop sequences"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch07-threads = { path = "../07-threads" }
+ch14-kv-cache = { path = "../14-kv-cache" }
+
+[dev-dependencies]
+ch13-transformer = { path = "../13-transformer" }
+
+[lints]
+workspace = true

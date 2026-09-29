@@ -103,6 +103,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch15-sampling"
+version = "0.1.0"
+dependencies = [
+ "ch07-threads",
+ "ch13-transformer",
+ "ch14-kv-cache",
+]
+
+[[package]]
 name = "crossbeam-deque"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
