@@ -1,0 +1,25 @@
+[package]
+name = "ch16-real-model"
+version = "0.1.0"
+description = "Chapter 16: running SmolLM2 for real: config, bf16 weights, tokenizer.json, chat template"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch02-numbers = { path = "../02-numbers" }
+ch06-simd = { path = "../06-simd" }
+ch07-threads = { path = "../07-threads" }
+ch09-safetensors = { path = "../09-safetensors" }
+ch11-tokenization = { path = "../11-tokenization" }
+ch12-attention = { path = "../12-attention" }
+ch13-transformer = { path = "../13-transformer" }
+ch14-kv-cache = { path = "../14-kv-cache" }
+ch15-sampling = { path = "../15-sampling" }
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
