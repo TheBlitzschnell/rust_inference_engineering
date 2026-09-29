@@ -197,12 +197,32 @@ pub trait Matrix: Send + Sync {
         m: usize,
         scratch: &mut Vec<f32>,
     );
+
+    /// Multiplies the same `x` by several matrices with the same number of
+    /// columns: `outputs[i] = x · matrices[i]ᵀ`. The default simply calls
+    /// `matmul` for each; chapter 17 overrides it to do all of them in one
+    /// parallel pass, which matters when the matrices are small.
+    fn matmul_many(
+        pool: &mut SpinPool,
+        matrices: &[&Self],
+        x: &[f32],
+        outputs: &mut [&mut [f32]],
+        m: usize,
+        scratch: &mut Vec<f32>,
+    ) where
+        Self: Sized,
+    {
+        for (w, y) in matrices.iter().zip(outputs.iter_mut()) {
+            w.matmul(pool, x, y, m, scratch);
+        }
+    }
 }
 ```
 
 - **`Send + Sync`**: the weights are read by every pool thread at once, so they must be safe to share.
 - **`row_to_f32`** serves the embedding lookup, which reads one row per token. With tied embeddings, the same matrix is the LM head, so it needs both operations.
 - **`matmul`** takes activations in `f32` whatever the weight format. Every format in this course keeps activations in `f32` and changes only how weights are stored.
+- **`matmul_many`** is a *provided* method: it has a default body, so implementations get it for free and may override it. The forward pass uses it where several matrices read the same input (Q, K and V; gate and up). Its `where Self: Sized` keeps the trait usable as `dyn Matrix`, since a method taking `&[&Self]` could not be called through a trait object.
 
 The `f32` implementation forwards to the shared kernel, with chapter 6's `dot` as the inner loop:
 
@@ -337,16 +357,18 @@ The capacity check comes first, so a full cache is an error before any state cha
                 c.rms_norm_eps,
                 &mut s.normed[..m * h],
             );
-            let normed = &s.normed[..m * h];
-            layer
-                .wq
-                .matmul(pool, normed, &mut s.q[..m * q_dim], m, &mut s.matmul);
-            layer
-                .wk
-                .matmul(pool, normed, &mut s.k[..m * kv_dim], m, &mut s.matmul);
-            layer
-                .wv
-                .matmul(pool, normed, &mut s.v[..m * kv_dim], m, &mut s.matmul);
+            W::matmul_many(
+                pool,
+                &[&layer.wq, &layer.wk, &layer.wv],
+                &s.normed[..m * h],
+                &mut [
+                    &mut s.q[..m * q_dim],
+                    &mut s.k[..m * kv_dim],
+                    &mut s.v[..m * kv_dim],
+                ],
+                m,
+                &mut s.matmul,
+            );
             for t in 0..m {
                 let pos = start + t;
                 let (qt, kt) = (t * q_dim..(t + 1) * q_dim, t * kv_dim..(t + 1) * kv_dim);
@@ -362,6 +384,7 @@ Compared with chapter 13's `forward`:
 - **Positions are absolute.** Token `t` of this chunk is at position `start + t`, where `start` is how many positions the cache already holds. RoPE and the cache both use that position. Using `t` instead is the classic KV cache bug: the first chunk works, every later one is wrong, and the `chunked_prefill_matches_one_big_prefill` test exists to catch it.
 - **Keys and values go into the cache right after RoPE**, before attention, so each new token attends to itself as well as to the past.
 - **Every buffer is a slice of the scratch**, cut to the chunk's `m` rows.
+- **Q, K and V come from one `matmul_many` call**, because all three multiply the same normalized input (the MLP's gate and up projections do the same). With this chapter's matrices it is three ordinary `matmul`s; chapter 17 measures why doing them as one pass is faster.
 
 After the layers, the cache length advances once, and the LM head runs on only the rows that need logits:
 

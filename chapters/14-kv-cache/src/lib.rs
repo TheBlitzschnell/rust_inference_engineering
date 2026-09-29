@@ -45,6 +45,25 @@ pub trait Matrix: Send + Sync {
         m: usize,
         scratch: &mut Vec<f32>,
     );
+
+    /// Multiplies the same `x` by several matrices with the same number of
+    /// columns: `outputs[i] = x · matrices[i]ᵀ`. The default simply calls
+    /// `matmul` for each; chapter 17 overrides it to do all of them in one
+    /// parallel pass, which matters when the matrices are small.
+    fn matmul_many(
+        pool: &mut SpinPool,
+        matrices: &[&Self],
+        x: &[f32],
+        outputs: &mut [&mut [f32]],
+        m: usize,
+        scratch: &mut Vec<f32>,
+    ) where
+        Self: Sized,
+    {
+        for (w, y) in matrices.iter().zip(outputs.iter_mut()) {
+            w.matmul(pool, x, y, m, scratch);
+        }
+    }
 }
 
 /// Plain `f32` weights, 64-byte aligned.
@@ -55,6 +74,10 @@ pub struct DenseF32 {
 }
 
 impl DenseF32 {
+    pub fn values(&self) -> &[f32] {
+        &self.data
+    }
+
     pub fn new(data: &[f32], rows: usize, cols: usize) -> Self {
         assert_eq!(data.len(), rows * cols, "matrix data has the wrong size");
         Self {
@@ -316,6 +339,18 @@ impl<W: Matrix> Model<W> {
         self.lm_head.as_ref().unwrap_or(&self.embed)
     }
 
+    /// Takes the model apart, so that it can be rebuilt with [`Model::new`]
+    /// around different matrices (chapter 17 wraps each one in a timer).
+    pub fn into_parts(self) -> (Config, W, Vec<Layer<W>>, Vec<f32>, Option<W>) {
+        (
+            self.config,
+            self.embed,
+            self.layers,
+            self.final_norm,
+            self.lm_head,
+        )
+    }
+
     /// Bytes of weights read to process one token (every matrix once; the
     /// embedding is only read for the LM head, one row is negligible).
     pub fn weight_bytes_per_token(&self) -> usize {
@@ -419,16 +454,18 @@ impl<W: Matrix> Model<W> {
                 c.rms_norm_eps,
                 &mut s.normed[..m * h],
             );
-            let normed = &s.normed[..m * h];
-            layer
-                .wq
-                .matmul(pool, normed, &mut s.q[..m * q_dim], m, &mut s.matmul);
-            layer
-                .wk
-                .matmul(pool, normed, &mut s.k[..m * kv_dim], m, &mut s.matmul);
-            layer
-                .wv
-                .matmul(pool, normed, &mut s.v[..m * kv_dim], m, &mut s.matmul);
+            W::matmul_many(
+                pool,
+                &[&layer.wq, &layer.wk, &layer.wv],
+                &s.normed[..m * h],
+                &mut [
+                    &mut s.q[..m * q_dim],
+                    &mut s.k[..m * kv_dim],
+                    &mut s.v[..m * kv_dim],
+                ],
+                m,
+                &mut s.matmul,
+            );
             for t in 0..m {
                 let pos = start + t;
                 let (qt, kt) = (t * q_dim..(t + 1) * q_dim, t * kv_dim..(t + 1) * kv_dim);
@@ -453,13 +490,14 @@ impl<W: Matrix> Model<W> {
                 c.rms_norm_eps,
                 &mut s.normed[..m * h],
             );
-            let normed = &s.normed[..m * h];
-            layer
-                .w_gate
-                .matmul(pool, normed, &mut s.gate[..m * inter], m, &mut s.matmul);
-            layer
-                .w_up
-                .matmul(pool, normed, &mut s.up[..m * inter], m, &mut s.matmul);
+            W::matmul_many(
+                pool,
+                &[&layer.w_gate, &layer.w_up],
+                &s.normed[..m * h],
+                &mut [&mut s.gate[..m * inter], &mut s.up[..m * inter]],
+                m,
+                &mut s.matmul,
+            );
             swiglu(
                 &s.gate[..m * inter],
                 &s.up[..m * inter],

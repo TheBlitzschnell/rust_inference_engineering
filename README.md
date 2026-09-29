@@ -52,7 +52,7 @@ Each chapter is a folder with a lesson (`README.md`) and a Rust crate you can ru
 
 | # | Chapter | You will build |
 |---|---|---|
-| 17 | [Measuring and profiling](chapters/17-profiling/README.md) | A benchmark harness and a per-operator profiler for the real model |
+| 17 | [Measuring and profiling](chapters/17-profiling/README.md) | Sampling and per-matrix profiles of the real model, A/B tests on a noisy machine, a tiled prefill kernel |
 | 18 | [Quantization I: int8](chapters/18-int8/README.md) | Symmetric int8 weights and activations, integer dot products, perplexity checks |
 | 19 | [Quantization II: 4-bit](chapters/19-4bit/README.md) | Block-wise 4-bit weights with packed nibbles; quality versus size |
 | 20 | [FlashAttention](chapters/20-flash-attention/README.md) | Online softmax, tiled attention and split-KV decoding |

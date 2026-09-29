@@ -68,7 +68,7 @@ What the numbers say:
 
 - **Alignment mattered far less than chapter 6 suggested.** Over seven paired runs, the aligned 135M model decoded no faster than the mapped one (slower in five, equal in one, faster in one; means 81 against 85 tokens/s). For the 360M model (section 9, exercise 1) the aligned copy was faster in four of five runs, by 12% on average. Nowhere near chapter 6's factor of 2: that penalty was measured on data in the cache, where the loads themselves are the bottleneck, while a decode step streams hundreds of megabytes from DRAM and mostly waits for memory. Prefill, which does work on cached data, showed no consistent difference either, probably because the `bf16` kernel converts every value before using it and so does more work per byte loaded than chapter 6's `f32` kernel. This is why you measure the real workload instead of carrying a micro-benchmark's conclusion over to it, and measure it more than once.
 - **Mapping is free to load.** 8 ms, against 153 ms to copy. The mapped weights appear as "RSS file": memory the kernel can drop under pressure and read back from disk, and share between processes. Four server processes mapping the same file use one copy of the weights. The aligned copy is private, anonymous memory in every process.
-- **`bf16` decodes 1.5 times faster than `f32`, not 2 times.** Halving the bytes should halve the time of a memory-bound step. But the `bf16` runs moved 19-26 GB/s against 28-35 GB/s for `f32`: the `bf16` kernel does not keep the memory system as busy. Chapter 17 finds out why and fixes it.
+- **`bf16` decodes 1.5 times faster than `f32`, not 2 times.** Halving the bytes should halve the time of a memory-bound step. But the `bf16` runs moved 19-26 GB/s against 28-35 GB/s for `f32`: the `bf16` kernel does not keep the memory system as busy. Per byte of weights it does twice the multiply-adds of the `f32` kernel, plus a widening of every value, so each core consumes bytes more slowly. Chapter 17 profiles the decode step in detail.
 - **Prefill is compute-bound**, so `bf16` weights (which must be converted before every multiply) do not help it; `f32` was slightly faster in every run.
 - **Converting to `f32` took 1-3 seconds.** This loader converts element by element into a temporary vector and then copies it into aligned memory, touching about 1 GB of fresh memory (exercise 4 removes the copy). It is a one-time cost and the least important number in the table.
 
@@ -340,7 +340,7 @@ tokenizer: loaded in 61ms; 42509 bytes -> 10740 tokens in 7.6ms (5.6 MB/s, 3.96 
 
 - A model is three files plus a chat template. Read every field that changes the computation, refuse everything you do not implement, and check every tensor.
 - Memory-mapped `bf16` weights load in 8 ms and are shared through the page cache. They decoded as fast as an aligned copy for the 135M model and 12% slower for the 360M one: far from chapter 6's factor of 2, because the bottleneck is DRAM.
-- `bf16` weights decode 1.5 times faster than `f32` (82-98 against 53-65 tokens/s); 2x is the target, and chapter 17 goes after the difference.
+- `bf16` weights decode 1.5 times faster than `f32` (82-98 against 53-65 tokens/s), not the 2x that halving the bytes suggests: the `bf16` kernel does more work per byte.
 - The tokenizer must match the reference exactly: byte-to-character table, merge ranks, GPT-2's pattern with its look-ahead, digit splitting, special tokens, and even the bytes it silently drops.
 - Our engine matches PyTorch: identical tokens, logits within 6.5e-5, identical greedy generations. The model itself is small and often wrong; the engine is not.
 
@@ -372,4 +372,4 @@ tokenizer: loaded in 61ms; 42509 bytes -> 10740 tokens in 7.6ms (5.6 MB/s, 3.96 
 - Radford et al., "Language Models are Unsupervised Multitask Learners" (GPT-2), 2019, and its `encoder.py`: the byte-to-unicode table and the pre-tokenization pattern.
 - Hugging Face `transformers`, "Chat templates" documentation.
 - The safetensors format specification, and llama.cpp's GGUF specification for a single-file alternative.
-- Next: [Chapter 17: Profiling](../17-profiling/README.md). Find out where the time goes, and why `bf16` is not yet twice as fast.
+- Next: [Chapter 17: Measuring and profiling](../17-profiling/README.md). Find out where the time goes, and what can still be sped up.

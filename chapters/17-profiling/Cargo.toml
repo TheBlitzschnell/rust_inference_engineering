@@ -1,0 +1,23 @@
+[package]
+name = "ch17-profiling"
+version = "0.1.0"
+description = "Chapter 17: finding where the time goes, and a faster bf16 kernel"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch02-numbers = { path = "../02-numbers" }
+ch06-simd = { path = "../06-simd" }
+ch07-threads = { path = "../07-threads" }
+ch13-transformer = { path = "../13-transformer" }
+ch14-kv-cache = { path = "../14-kv-cache" }
+ch16-real-model = { path = "../16-real-model" }
+
+[dev-dependencies]
+ch09-safetensors = { path = "../09-safetensors" }
+serde_json.workspace = true
+
+[lints]
+workspace = true

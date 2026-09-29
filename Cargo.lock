@@ -139,6 +139,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch17-profiling"
+version = "0.1.0"
+dependencies = [
+ "ch02-numbers",
+ "ch06-simd",
+ "ch07-threads",
+ "ch09-safetensors",
+ "ch13-transformer",
+ "ch14-kv-cache",
+ "ch16-real-model",
+ "serde_json",
+]
+
+[[package]]
 name = "crossbeam-deque"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
