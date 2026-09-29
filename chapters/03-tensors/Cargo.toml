@@ -1,0 +1,11 @@
+[package]
+name = "ch03-tensors"
+version = "0.1.0"
+description = "Chapter 3: tensors, strides and zero-copy views"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

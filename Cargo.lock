@@ -11,5 +11,13 @@ name = "ch02-numbers"
 version = "0.1.0"
 
 [[package]]
+name = "ch03-tensors"
+version = "0.1.0"
+
+[[package]]
+name = "ch04-memory"
+version = "0.1.0"
+
+[[package]]
 name = "xtask"
 version = "0.1.0"

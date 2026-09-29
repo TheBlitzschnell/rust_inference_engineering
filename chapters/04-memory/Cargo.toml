@@ -1,0 +1,11 @@
+[package]
+name = "ch04-memory"
+version = "0.1.0"
+description = "Chapter 4: caches, bandwidth, latency and the roofline model"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
