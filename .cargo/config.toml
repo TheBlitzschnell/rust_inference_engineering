@@ -1,0 +1,12 @@
+[alias]
+# `cargo xtask check-snippets` verifies every code excerpt in the lessons
+# still matches the source file it was copied from.
+xtask = "run -q -p xtask --"
+
+# Only used when you explicitly build for this target, e.g. to test the ARM
+# NEON code paths on an x86 machine:
+#   cargo test --target aarch64-unknown-linux-gnu -p ch06-simd
+# Requires `gcc-aarch64-linux-gnu` and `qemu-user` (Debian/Ubuntu package names).
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
+runner = "qemu-aarch64 -L /usr/aarch64-linux-gnu"

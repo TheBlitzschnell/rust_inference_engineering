@@ -1,0 +1,11 @@
+[package]
+name = "ch02-numbers"
+version = "0.1.0"
+description = "Chapter 2: f32, f16, bf16 and fp8 from scratch"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
