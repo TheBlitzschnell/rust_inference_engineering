@@ -10,7 +10,10 @@ use ch14_kv_cache::{Matrix, Model};
 pub mod attention;
 pub mod online;
 
-pub use attention::{FlashOptions, MAX_TILE, flash_attention, flash_decode_many};
+pub use attention::{
+    FlashOptions, MAX_TILE, attend_tile, flash_attention, flash_decode_many, merge_parts,
+    reset_state,
+};
 
 /// The same model, with [`flash_attention`] instead of the built-in
 /// attention.

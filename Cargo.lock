@@ -314,6 +314,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch24-paged-kv-cache"
+version = "0.1.0"
+dependencies = [
+ "ch07-threads",
+ "ch08-operators",
+ "ch13-transformer",
+ "ch14-kv-cache",
+ "ch15-sampling",
+ "ch16-real-model",
+ "ch17-profiling",
+ "ch20-flash-attention",
+ "ch21-engine-thread",
+ "ch23-continuous-batching",
+]
+
+[[package]]
 name = "crossbeam-deque"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"

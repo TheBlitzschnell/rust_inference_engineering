@@ -1,0 +1,27 @@
+[package]
+name = "ch24-paged-kv-cache"
+version = "0.1.0"
+description = "Chapter 24: a paged KV cache with block tables, paged attention, preemption and prefix caching"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch07-threads = { path = "../07-threads" }
+ch08-operators = { path = "../08-operators" }
+ch14-kv-cache = { path = "../14-kv-cache" }
+ch15-sampling = { path = "../15-sampling" }
+ch20-flash-attention = { path = "../20-flash-attention" }
+ch21-engine-thread = { path = "../21-engine-thread" }
+
+# Used by the demo (src/main.rs) only.
+ch16-real-model = { path = "../16-real-model" }
+ch17-profiling = { path = "../17-profiling" }
+ch23-continuous-batching = { path = "../23-continuous-batching" }
+
+[dev-dependencies]
+ch13-transformer = { path = "../13-transformer" }
+
+[lints]
+workspace = true

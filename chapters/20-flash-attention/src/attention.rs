@@ -212,8 +212,10 @@ pub fn flash_decode_many(
 }
 
 /// Merges `splits` partial states (tasks `first..first + splits`, each
-/// state at offset `at` within its task) into `o`, normalized.
-fn merge_parts(
+/// state at offset `at` within its task, tasks `per_task` floats apart)
+/// into `o`, normalized. Public for attention implementations with their
+/// own task layout (chapter 24).
+pub fn merge_parts(
     states: &[f32],
     first: usize,
     splits: usize,
@@ -340,6 +342,41 @@ fn run_task_with<K: Kernels>(
     }
 }
 
+/// An empty online-softmax state: `[max = −∞, sum = 0, acc = 0...]`.
+pub fn reset_state(state: &mut [f32]) {
+    state[0] = f32::NEG_INFINITY;
+    state[1] = 0.0;
+    state[2..].fill(0.0);
+}
+
+/// One query head against one tile of keys, for attention code that stores
+/// keys its own way (chapter 24's paged cache): scores `q` against the
+/// `n = keys.len() / q.len()` keys, scaled by `1/√d`, and folds them and
+/// their `values` into `state` (`[max, sum, acc...]`, `d + 2` floats).
+/// Every key in the tile must be visible to the query.
+pub fn attend_tile(q: &[f32], keys: &[f32], values: &[f32], state: &mut [f32], simd: bool) {
+    assert!(keys.len() / q.len() <= MAX_TILE, "tile too large");
+    #[cfg(target_arch = "x86_64")]
+    if simd && q.len() == 64 && std::arch::is_x86_feature_detected!("avx512f") {
+        // SAFETY: AVX-512F was just detected, and heads have 64 dimensions.
+        unsafe { x86::attend_tile_avx512(q, keys, values, state) };
+        return;
+    }
+    attend_tile_with::<Portable>(q, keys, values, state);
+}
+
+#[inline(always)]
+fn attend_tile_with<K: Kernels>(q: &[f32], keys: &[f32], values: &[f32], state: &mut [f32]) {
+    let d = q.len();
+    let scale = 1.0 / (d as f32).sqrt();
+    let mut scores = [0.0f32; MAX_TILE];
+    let tile = &mut scores[..keys.len() / d];
+    for (sc, key) in tile.iter_mut().zip(keys.chunks_exact(d)) {
+        *sc = K::dot(q, key) * scale;
+    }
+    online_update::<K>(state, tile, values);
+}
+
 /// One tile of scores into an online-softmax state `[max, sum, acc...]`.
 /// The scores are overwritten with their weights `exp(s − max)`.
 #[inline(always)]
@@ -367,7 +404,7 @@ mod x86 {
     //! The same task, compiled for AVX-512 with kernels for 64-dimension
     //! heads: a head is exactly four 16-lane vectors.
 
-    use super::{Kernels, Task, run_task_with};
+    use super::{Kernels, Task, attend_tile_with, run_task_with};
     use ch14_kv_cache::AttentionInput;
     use std::arch::x86_64::{
         __m512, _mm512_add_ps, _mm512_fmadd_ps, _mm512_loadu_ps, _mm512_mul_ps,
@@ -442,5 +479,18 @@ mod x86 {
         key_block: usize,
     ) {
         run_task_with::<Avx512D64>(input, task, group, state, key_block);
+    }
+
+    /// # Safety
+    ///
+    /// The CPU must support AVX-512F, and heads must have 64 dimensions.
+    #[target_feature(enable = "avx512f")]
+    pub(super) unsafe fn attend_tile_avx512(
+        q: &[f32],
+        keys: &[f32],
+        values: &[f32],
+        state: &mut [f32],
+    ) {
+        attend_tile_with::<Avx512D64>(q, keys, values, state);
     }
 }
