@@ -166,22 +166,24 @@ pub fn matmul_tiled<W, D, T>(
 /// Decode-time fusion: `outputs[i] = x · parts[i]ᵀ` for several matrices
 /// that share `x`, as **one** parallel pass over all their rows.
 ///
-/// Each `parts[i]` holds whole rows of `row_len` elements of `W`; `x` has
-/// `k` values. Threads split the combined rows evenly, writing into
+/// Each `parts[i]` holds whole rows of `row_len` elements of `W`; `x` is
+/// the activation row in whatever form `dot` takes (`f32` values, or
+/// quantized blocks in chapter 18). Threads split the combined rows evenly, writing into
 /// `scratch`, and the results are then copied to their outputs. One pass
 /// means one synchronisation and one set of per-thread streams instead of
 /// one per matrix.
-pub fn matvec_many<W, D>(
+pub fn matvec_many<W, X, D>(
     pool: &mut SpinPool,
     parts: &[&[W]],
     row_len: usize,
-    x: &[f32],
+    x: &[X],
     outputs: &mut [&mut [f32]],
     scratch: &mut Vec<f32>,
     dot: D,
 ) where
     W: Sync,
-    D: Fn(&[W], &[f32]) -> f32 + Sync,
+    X: Sync,
+    D: Fn(&[W], &[X]) -> f32 + Sync,
 {
     assert_eq!(parts.len(), outputs.len(), "one output per matrix");
     let rows: Vec<usize> = parts.iter().map(|p| p.len() / row_len).collect();

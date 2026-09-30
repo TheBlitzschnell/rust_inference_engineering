@@ -401,4 +401,4 @@ The tests include [`tests/reference.rs`](tests/reference.rs), which runs every m
 - Goto and van de Geijn, "Anatomy of High-Performance Matrix Multiplication", 2008: register and cache tiling.
 - Amdahl, "Validity of the single processor approach to achieving large scale computing capabilities", 1967.
 - Georges, Buytaert and Eeckhout, "Statistically Rigorous Java Performance Evaluation", 2007: why single runs mislead, with methods that apply to any language.
-- Next: [Chapter 18: Int8 quantization](../18-int8/README.md). Halve the bytes per weight again.
+- Next: [Chapter 18: Quantization I: int8](../18-int8/README.md). Halve the bytes per weight again.
