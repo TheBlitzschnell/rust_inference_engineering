@@ -293,7 +293,8 @@ For decode (`m == 1`) there is no transpose: each thread computes a range of out
     }
 
     /// Stores one position's keys and values (all KV heads) for a layer.
-    fn store(&mut self, layer: usize, pos: usize, k_row: &[f32], v_row: &[f32]) {
+    pub fn store(&mut self, layer: usize, pos: usize, k_row: &[f32], v_row: &[f32]) {
+        assert!(pos < self.capacity, "position {pos} beyond the cache");
         let d = self.head_dim;
         for head in 0..self.kv_heads {
             let at = self.offset(layer, head, pos);
@@ -301,6 +302,8 @@ For decode (`m == 1`) there is no transpose: each thread computes a range of out
             self.v[at..at + d].copy_from_slice(&v_row[head * d..(head + 1) * d]);
         }
     }
+
+    // ...
 
     /// Keys of one head for positions `0..upto`, as `[upto × head_dim]`.
     pub fn keys(&self, layer: usize, head: usize, upto: usize) -> &[f32] {

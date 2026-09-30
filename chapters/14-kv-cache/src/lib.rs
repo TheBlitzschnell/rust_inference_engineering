@@ -124,6 +124,7 @@ impl Matrix for DenseF32 {
 /// Layout: `[layer][kv_head][position][head_dim]`. Keeping each head's
 /// positions contiguous means attention reads one head's keys as a single
 /// run of memory.
+#[derive(Clone)]
 pub struct KvCache {
     k: Vec<f32>,
     v: Vec<f32>,
@@ -182,13 +183,21 @@ impl KvCache {
     }
 
     /// Stores one position's keys and values (all KV heads) for a layer.
-    fn store(&mut self, layer: usize, pos: usize, k_row: &[f32], v_row: &[f32]) {
+    pub fn store(&mut self, layer: usize, pos: usize, k_row: &[f32], v_row: &[f32]) {
+        assert!(pos < self.capacity, "position {pos} beyond the cache");
         let d = self.head_dim;
         for head in 0..self.kv_heads {
             let at = self.offset(layer, head, pos);
             self.k[at..at + d].copy_from_slice(&k_row[head * d..(head + 1) * d]);
             self.v[at..at + d].copy_from_slice(&v_row[head * d..(head + 1) * d]);
         }
+    }
+
+    /// Marks `n` more positions, already stored in every layer, as part of
+    /// the sequence (used by chapter 23's batched forward pass).
+    pub fn advance(&mut self, n: usize) {
+        assert!(self.len + n <= self.capacity, "KV cache full");
+        self.len += n;
     }
 
     /// Keys of one head for positions `0..upto`, as `[upto × head_dim]`.
@@ -369,6 +378,11 @@ impl<W: Matrix> Model<W> {
 
     pub fn lm_head(&self) -> &W {
         self.lm_head.as_ref().unwrap_or(&self.embed)
+    }
+
+    /// The rotary position tables.
+    pub fn rope(&self) -> &Rope {
+        &self.rope
     }
 
     /// Takes the model apart, so that it can be rebuilt with [`Model::new`]

@@ -82,7 +82,8 @@ pub fn flash_attention(
         opts.key_block > 0 && opts.key_block <= MAX_TILE,
         "bad key block"
     );
-    let qb = opts.query_block.max(1);
+    // No bigger than the chunk: a decode step has one query token.
+    let qb = opts.query_block.clamp(1, m.max(1));
     let blocks = m.div_ceil(qb);
     let splits = if opts.key_splits > 0 {
         opts.key_splits
@@ -132,31 +133,114 @@ pub fn flash_attention(
             for t in task.t0..task.t1 {
                 for g in 0..group {
                     let at = ((t - task.t0) * group + g) * stride;
-                    let (mut mx, mut sum) = (f32::NEG_INFINITY, 0.0f32);
                     let head = kv_head * group + g;
                     let o = &mut out[t * q_dim + head * d..t * q_dim + (head + 1) * d];
-                    o.fill(0.0);
-                    for s in 0..splits {
-                        let part = &states[(first + s) * per_task + at..][..stride];
-                        let (pm, ps, pacc) = (part[0], part[1], &part[2..]);
-                        if pm == f32::NEG_INFINITY {
-                            continue;
-                        }
-                        let new = mx.max(pm);
-                        let (a, bscale) = (exp_fast(mx - new), exp_fast(pm - new));
-                        sum = sum * a + ps * bscale;
-                        for (x, &y) in o.iter_mut().zip(pacc) {
-                            *x = *x * a + y * bscale;
-                        }
-                        mx = new;
-                    }
-                    let inv = 1.0 / sum;
-                    for x in o.iter_mut() {
-                        *x *= inv;
-                    }
+                    merge_parts(&states, first, splits, per_task, at, o);
                 }
             }
         }
+    }
+}
+
+/// Decode attention for many sequences at once, each with one new token
+/// (chapter 23's batches): `out` receives one `q_dim` row per input, in
+/// order. All sequences' tasks go to the pool in one parallel pass, and
+/// the per-task states live in `states`, reused from call to call.
+pub fn flash_decode_many(
+    pool: &mut SpinPool,
+    inputs: &[AttentionInput<'_>],
+    out: &mut [f32],
+    opts: &FlashOptions,
+    states: &mut Vec<f32>,
+) {
+    let Some(first) = inputs.first() else {
+        return;
+    };
+    let c = first.config;
+    let (d, q_dim) = (c.head_dim, c.q_dim());
+    let group = c.num_heads / c.num_kv_heads;
+    assert!(inputs.iter().all(|i| i.m == 1), "one token per sequence");
+    assert_eq!(out.len(), inputs.len() * q_dim, "one output row per input");
+    // Split keys only if there are too few (sequence, KV head) tasks to
+    // give every thread the same number: the same rule as above.
+    let base = inputs.len() * c.num_kv_heads;
+    let threads = pool.threads();
+    let shortest = inputs.iter().map(|i| i.start + 1).min().unwrap_or(1);
+    let splits = (threads / gcd(base, threads))
+        .min(shortest.div_ceil(opts.key_block))
+        .max(1);
+    let stride = d + 2;
+    let per_task = group * stride;
+    let task_of = |id: usize| {
+        let (seq, rest) = (
+            id / (c.num_kv_heads * splits),
+            id % (c.num_kv_heads * splits),
+        );
+        let (kv_head, s) = (rest / splits, rest % splits);
+        let keys = inputs[seq].start + 1;
+        let part = keys.div_ceil(splits);
+        (
+            seq,
+            Task {
+                kv_head,
+                t0: 0,
+                t1: 1,
+                k0: (s * part).min(keys),
+                k1: ((s + 1) * part).min(keys),
+            },
+        )
+    };
+    states.clear();
+    states.resize(base * splits * per_task, 0.0);
+    pool.for_each_chunk_mut(states, per_task, |first, mine| {
+        for (i, state) in mine.chunks_exact_mut(per_task).enumerate() {
+            let (seq, task) = task_of(first / per_task + i);
+            run_task(&inputs[seq], task, group, state, opts);
+        }
+    });
+    // Merge each (sequence, head)'s parts, as in `flash_attention`.
+    for (seq, row) in out.chunks_exact_mut(q_dim).enumerate() {
+        for kv_head in 0..c.num_kv_heads {
+            let first = (seq * c.num_kv_heads + kv_head) * splits;
+            for g in 0..group {
+                let head = kv_head * group + g;
+                let o = &mut row[head * d..(head + 1) * d];
+                merge_parts(states, first, splits, per_task, g * stride, o);
+            }
+        }
+    }
+}
+
+/// Merges `splits` partial states (tasks `first..first + splits`, each
+/// state at offset `at` within its task) into `o`, normalized.
+fn merge_parts(
+    states: &[f32],
+    first: usize,
+    splits: usize,
+    per_task: usize,
+    at: usize,
+    o: &mut [f32],
+) {
+    let stride = o.len() + 2;
+    let (mut mx, mut sum) = (f32::NEG_INFINITY, 0.0f32);
+    o.fill(0.0);
+    for s in 0..splits {
+        let part = &states[(first + s) * per_task + at..][..stride];
+        let (pm, ps, pacc) = (part[0], part[1], &part[2..]);
+        if pm == f32::NEG_INFINITY {
+            continue;
+        }
+        let new = mx.max(pm);
+        let (a, b) = (exp_fast(mx - new), exp_fast(pm - new));
+        sum = sum * a + ps * b;
+        for (x, &y) in o.iter_mut().zip(pacc) {
+            *x = *x * a + y * b;
+        }
+        mx = new;
+    }
+    let inv = 1.0 / sum;
+    for x in o.iter_mut() {
+        *x *= inv;
     }
 }
 

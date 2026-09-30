@@ -196,7 +196,7 @@ Section 3.2, line by line. A state is `[m, l, acc...]` in one slice of `d + 2` f
 
 `base` is the number of tasks without splitting (KV heads × query blocks). The smallest `s` that makes `base × s` a multiple of `threads` is `threads / gcd(base, threads)`: for 3 and 4 that is 4; for a prefill of 256 tokens in blocks of 16, `base = 48`, already a multiple of 4, so `s = 1` and nothing is split.
 
-Each task gets its own `d + 2`-float state per (token, query head), all in one `Vec`. `for_each_chunk_mut` hands every thread a disjoint `&mut` slice of it, so threads write without locks; afterwards, one loop merges each head's parts with the rule of section 3.2 and writes the output.
+Each task gets its own `d + 2`-float state per (token, query head), all in one `Vec`. (The query block is capped at the chunk's length, so a decode step allocates states for one token, not sixteen. Chapter 23 adds `flash_decode_many`, which runs the decode tasks of many sequences in one parallel pass with the same code and reuses the state buffer from call to call.) `for_each_chunk_mut` hands every thread a disjoint `&mut` slice of it, so threads write without locks; afterwards, one loop merges each head's parts with the rule of section 3.2 and writes the output.
 
 The loop inside a task:
 

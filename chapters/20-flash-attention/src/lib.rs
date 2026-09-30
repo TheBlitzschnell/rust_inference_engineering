@@ -10,7 +10,7 @@ use ch14_kv_cache::{Matrix, Model};
 pub mod attention;
 pub mod online;
 
-pub use attention::{FlashOptions, MAX_TILE, flash_attention};
+pub use attention::{FlashOptions, MAX_TILE, flash_attention, flash_decode_many};
 
 /// The same model, with [`flash_attention`] instead of the built-in
 /// attention.
@@ -73,6 +73,82 @@ mod tests {
         let want = logits(&Model::from_reference(&w), &tokens, 32, &mut pool);
         let flash = with_flash(Model::from_reference(&w), FlashOptions::default());
         assert!(close(&logits(&flash, &tokens, 32, &mut pool), &want));
+    }
+
+    #[test]
+    fn decoding_many_sequences_at_once_equals_one_at_a_time() {
+        use ch14_kv_cache::AttentionInput;
+        let config = Config {
+            num_heads: 6,
+            num_kv_heads: 2,
+            head_dim: 64,
+            hidden_size: 128,
+            ..Config::tiny()
+        };
+        let q_dim = config.q_dim();
+        let kv_dim = config.kv_dim();
+        let mut pool = SpinPool::new(4);
+        // Three caches of different lengths, filled with made-up keys and
+        // values in layer 0.
+        let lengths = [5, 70, 131];
+        let caches: Vec<KvCache> = lengths
+            .iter()
+            .enumerate()
+            .map(|(n, &len)| {
+                let mut cache = KvCache::new(&config, 200);
+                for pos in 0..len {
+                    let row = |salt: usize| -> Vec<f32> {
+                        (0..kv_dim)
+                            .map(|i| {
+                                (((i * 7 + pos * 13 + n * 31 + salt) % 23) as f32 - 11.0) / 9.0
+                            })
+                            .collect()
+                    };
+                    for layer in 0..config.num_layers {
+                        cache.store(layer, pos, &row(1), &row(2));
+                    }
+                }
+                cache.advance(len);
+                cache
+            })
+            .collect();
+        let qs: Vec<Vec<f32>> = (0..3)
+            .map(|n| {
+                (0..q_dim)
+                    .map(|i| (((i * 5 + n * 17) % 19) as f32 - 9.0) / 7.0)
+                    .collect()
+            })
+            .collect();
+        // The new token is the last position of each cache.
+        let inputs: Vec<AttentionInput<'_>> = caches
+            .iter()
+            .zip(&qs)
+            .map(|(cache, q)| AttentionInput {
+                layer: 0,
+                start: cache.len() - 1,
+                m: 1,
+                q,
+                cache,
+                config: &config,
+            })
+            .collect();
+        for opts in [
+            FlashOptions::default(),
+            FlashOptions {
+                simd: false,
+                key_block: 16,
+                ..FlashOptions::default()
+            },
+        ] {
+            let mut together = vec![0.0; 3 * q_dim];
+            let mut states = Vec::new();
+            flash_decode_many(&mut pool, &inputs, &mut together, &opts, &mut states);
+            for (input, got) in inputs.iter().zip(together.chunks_exact(q_dim)) {
+                let mut alone = vec![0.0; q_dim];
+                flash_attention(&mut pool, input, &mut alone, &opts);
+                assert!(close(got, &alone), "{opts:?}");
+            }
+        }
     }
 
     #[test]

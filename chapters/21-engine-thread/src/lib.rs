@@ -57,10 +57,10 @@ pub struct Summary {
 
 /// A request inside the engine: what was asked, where to send events, and
 /// when it arrived.
-struct Job {
-    request: Request,
-    events: async_mpsc::UnboundedSender<Event>,
-    submitted: Instant,
+pub struct Job {
+    pub request: Request,
+    pub events: async_mpsc::UnboundedSender<Event>,
+    pub submitted: Instant,
 }
 
 /// The client side: cheap to clone, usable from any thread or task.
@@ -100,6 +100,14 @@ impl EngineHandle {
     }
 }
 
+/// A handle and the queue of jobs it feeds. [`spawn`] uses it; so can any
+/// other engine loop (chapter 23's batching engine), which then works with
+/// every client of `EngineHandle`, such as chapter 22's server.
+pub fn channel() -> (EngineHandle, mpsc::Receiver<Job>) {
+    let (jobs, queue) = mpsc::channel();
+    (EngineHandle { jobs }, queue)
+}
+
 /// Starts the engine on a new thread. It runs until every `EngineHandle`
 /// is dropped, then finishes the requests already queued and returns.
 pub fn spawn<W: Matrix + 'static>(
@@ -107,7 +115,7 @@ pub fn spawn<W: Matrix + 'static>(
     threads: usize,
     context: usize,
 ) -> (EngineHandle, JoinHandle<()>) {
-    let (jobs, queue) = mpsc::channel::<Job>();
+    let (handle, queue) = channel();
     let thread = std::thread::Builder::new()
         .name("engine".into())
         .spawn(move || {
@@ -129,7 +137,7 @@ pub fn spawn<W: Matrix + 'static>(
             }
         })
         .expect("spawning the engine thread");
-    (EngineHandle { jobs }, thread)
+    (handle, thread)
 }
 
 /// Runs one request to completion (or cancellation).
