@@ -303,7 +303,7 @@ For decode (`m == 1`) there is no transpose: each thread computes a range of out
     }
 
     /// Keys of one head for positions `0..upto`, as `[upto × head_dim]`.
-    fn keys(&self, layer: usize, head: usize, upto: usize) -> &[f32] {
+    pub fn keys(&self, layer: usize, head: usize, upto: usize) -> &[f32] {
         let at = self.offset(layer, head, 0);
         &self.k[at..at + upto * self.head_dim]
     }
@@ -424,6 +424,8 @@ With SmolLM2's 49,152-token vocabulary and tied embeddings, the LM head is 108 M
 Each pool thread takes some query heads. For every token `t` of the chunk, it scores the query against the `start + t + 1` positions that token may see (the causal mask is simply "stop at `visible`"), applies softmax, and sums the values with those weights into the head's own output buffer. Afterwards, the results are gathered from head-major order into the `[token × head × dim]` layout the output projection expects.
 
 `q` is a shared borrow of one scratch field and `&mut s.heads` an exclusive borrow of another. Rust allows both at once because they are different fields of the same struct (section 6).
+
+The function starts with a check you can ignore for now: a model can carry a replacement attention (`with_attention`), used in chapter 20 to plug in flash attention without changing anything else.
 
 ### 4.6 Generation, and counting allocations
 

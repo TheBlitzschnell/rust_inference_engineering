@@ -1,0 +1,24 @@
+[package]
+name = "ch19-4bit"
+version = "0.1.0"
+description = "Chapter 19: 4-bit weights: packed nibbles, scale search, and what quality 4 bits cost"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch06-simd = { path = "../06-simd" }
+ch07-threads = { path = "../07-threads" }
+ch14-kv-cache = { path = "../14-kv-cache" }
+ch16-real-model = { path = "../16-real-model" }
+ch17-profiling = { path = "../17-profiling" }
+ch18-int8 = { path = "../18-int8" }
+
+[dev-dependencies]
+ch09-safetensors = { path = "../09-safetensors" }
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

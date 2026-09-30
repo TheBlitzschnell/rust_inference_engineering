@@ -192,16 +192,34 @@ impl KvCache {
     }
 
     /// Keys of one head for positions `0..upto`, as `[upto × head_dim]`.
-    fn keys(&self, layer: usize, head: usize, upto: usize) -> &[f32] {
+    pub fn keys(&self, layer: usize, head: usize, upto: usize) -> &[f32] {
         let at = self.offset(layer, head, 0);
         &self.k[at..at + upto * self.head_dim]
     }
 
-    fn values(&self, layer: usize, head: usize, upto: usize) -> &[f32] {
+    /// Values of one head for positions `0..upto`, as `[upto × head_dim]`.
+    pub fn values(&self, layer: usize, head: usize, upto: usize) -> &[f32] {
         let at = self.offset(layer, head, 0);
         &self.v[at..at + upto * self.head_dim]
     }
 }
+
+/// What an attention implementation receives for one layer of one chunk:
+/// the chunk's queries (after RoPE) and the cache, which already holds the
+/// chunk's own keys and values.
+pub struct AttentionInput<'a> {
+    pub layer: usize,
+    /// Position of the chunk's first token; the chunk is `start..start + m`.
+    pub start: usize,
+    pub m: usize,
+    /// `[m × q_dim]`, one row per token, heads side by side.
+    pub q: &'a [f32],
+    pub cache: &'a KvCache,
+    pub config: &'a Config,
+}
+
+/// A replacement attention (chapter 20): writes the `[m × q_dim]` output.
+pub type AttentionFn = dyn Fn(&mut SpinPool, &AttentionInput<'_>, &mut [f32]) + Send + Sync;
 
 /// Per-head scratch space for the parallel attention step.
 struct HeadScratch {
@@ -308,6 +326,8 @@ pub struct Model<W: Matrix> {
     /// `None` when the output layer is tied to the embedding.
     pub lm_head: Option<W>,
     rope: Rope,
+    /// `None`: the built-in attention below. Chapter 20 plugs in others.
+    attention_fn: Option<Box<AttentionFn>>,
 }
 
 impl<W: Matrix> Model<W> {
@@ -332,7 +352,19 @@ impl<W: Matrix> Model<W> {
             final_norm,
             lm_head,
             rope,
+            attention_fn: None,
         }
+    }
+
+    /// Replaces the attention computation. `into_parts` does not keep it:
+    /// set it again after rebuilding a model.
+    #[must_use]
+    pub fn with_attention(
+        mut self,
+        f: impl Fn(&mut SpinPool, &AttentionInput<'_>, &mut [f32]) + Send + Sync + 'static,
+    ) -> Self {
+        self.attention_fn = Some(Box::new(f));
+        self
     }
 
     pub fn lm_head(&self) -> &W {
@@ -548,6 +580,18 @@ impl<W: Matrix> Model<W> {
     ) {
         let c = &self.config;
         let (d, q_dim) = (c.head_dim, c.q_dim());
+        if let Some(f) = &self.attention_fn {
+            let input = AttentionInput {
+                layer,
+                start,
+                m,
+                q: &s.q[..m * q_dim],
+                cache,
+                config: c,
+            };
+            f(pool, &input, &mut s.attn[..m * q_dim]);
+            return;
+        }
         let heads = c.heads();
         let scale = 1.0 / (d as f32).sqrt();
         let q = &s.q;
