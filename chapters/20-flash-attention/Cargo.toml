@@ -1,0 +1,21 @@
+[package]
+name = "ch20-flash-attention"
+version = "0.1.0"
+description = "Chapter 20: attention in one pass: online softmax, tiles, grouped heads and split-KV decoding"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch06-simd = { path = "../06-simd" }
+ch07-threads = { path = "../07-threads" }
+ch08-operators = { path = "../08-operators" }
+ch12-attention = { path = "../12-attention" }
+ch13-transformer = { path = "../13-transformer" }
+ch14-kv-cache = { path = "../14-kv-cache" }
+ch16-real-model = { path = "../16-real-model" }
+ch17-profiling = { path = "../17-profiling" }
+
+[lints]
+workspace = true
