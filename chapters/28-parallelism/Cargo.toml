@@ -1,0 +1,26 @@
+[package]
+name = "ch28-parallelism"
+version = "0.1.0"
+description = "Chapter 28: tensor, pipeline and expert parallelism, simulated with threads and collectives"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch07-threads = { path = "../07-threads" }
+ch08-operators = { path = "../08-operators" }
+ch14-kv-cache = { path = "../14-kv-cache" }
+ch15-sampling = { path = "../15-sampling" }
+
+# Used by the demo (src/main.rs) only.
+ch02-numbers = { path = "../02-numbers" }
+ch16-real-model = { path = "../16-real-model" }
+ch17-profiling = { path = "../17-profiling" }
+ch23-continuous-batching = { path = "../23-continuous-batching" }
+
+[dev-dependencies]
+ch13-transformer = { path = "../13-transformer" }
+
+[lints]
+workspace = true
