@@ -348,6 +348,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch26-speculative-decoding"
+version = "0.1.0"
+dependencies = [
+ "ch07-threads",
+ "ch09-safetensors",
+ "ch13-transformer",
+ "ch14-kv-cache",
+ "ch15-sampling",
+ "ch16-real-model",
+ "ch17-profiling",
+ "ch18-int8",
+ "ch19-4bit",
+ "ch23-continuous-batching",
+]
+
+[[package]]
 name = "crossbeam-deque"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
