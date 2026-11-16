@@ -50,7 +50,7 @@ pub fn dot_q4_q8_portable(w: &[BlockQ4], x: &[BlockQ8]) -> f32 {
 pub fn dot_q4_f32(w: &[BlockQ4], x: &[f32]) -> f32 {
     assert_eq!(x.len(), w.len() * BLOCK, "x must have 64 values per block");
     let mut total = 0.0;
-    for (b, xs) in w.iter().zip(x.chunks_exact(BLOCK)) {
+    for (b, xs) in w.iter().zip(x.as_chunks::<BLOCK>().0) {
         let (mut cx, mut sx) = (0.0f32, 0.0f32);
         for (i, &v) in xs.iter().enumerate() {
             cx += f32::from(b.code(i)) * v;

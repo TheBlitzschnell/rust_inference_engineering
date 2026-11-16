@@ -168,10 +168,10 @@ mod tests {
         // The latest occurrence wins, and a short continuation is fine.
         assert_eq!(propose(&[4, 2, 4, 3, 4], 4), [3, 4]);
         // No earlier occurrence of even the last token: nothing.
-        assert!(propose(&[1, 2, 3], 4).is_empty());
+        assert_eq!(propose(&[1, 2, 3], 4), []);
         // With min_n = 2, a single repeated token is not enough.
         let mut d = NgramDrafter { min_n: 2, max_n: 3 };
         let draft = d.propose(&mut pool, &[4, 2, 4, 3, 4], 4, Mode::Greedy, &mut rng);
-        assert!(draft.tokens.is_empty());
+        assert_eq!(draft.tokens, []);
     }
 }

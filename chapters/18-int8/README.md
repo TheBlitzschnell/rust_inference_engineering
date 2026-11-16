@@ -177,7 +177,7 @@ The block and quantization are in [`src/quant.rs`](src/quant.rs), the kernels in
 
 <!-- file: src/kernels.rs -->
 ```rust
-        for (b, xs) in w.iter().zip(x.chunks_exact(BLOCK)) {
+        for (b, xs) in w.iter().zip(x.as_chunks::<BLOCK>().0) {
             let mut acc = _mm512_setzero_ps();
             for part in 0..4 {
                 // SAFETY: 16 bytes at 16 * part are inside the 64-byte `q`,

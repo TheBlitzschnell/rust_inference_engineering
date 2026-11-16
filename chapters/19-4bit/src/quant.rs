@@ -98,7 +98,7 @@ fn quantize_group(
             best(candidates)
         }
     };
-    for chunk in values.chunks_exact(BLOCK) {
+    for chunk in values.as_chunks::<BLOCK>().0 {
         let mut codes = [0u8; BLOCK];
         for (c, &v) in codes.iter_mut().zip(chunk) {
             *c = code(v, scale, min);
@@ -186,7 +186,7 @@ fn quantize_impl(
 
 pub fn dequantize(blocks: &[BlockQ4]) -> Vec<f32> {
     let mut out = vec![0.0; blocks.len() * BLOCK];
-    for (b, o) in blocks.iter().zip(out.chunks_exact_mut(BLOCK)) {
+    for (b, o) in blocks.iter().zip(out.as_chunks_mut::<BLOCK>().0) {
         b.dequantize(o);
     }
     out
@@ -213,7 +213,7 @@ mod tests {
     }
 
     #[test]
-    #[expect(
+    #[allow(
         clippy::float_cmp,
         reason = "code 8 must reconstruct exactly zero: 8 · scale − 8 · scale"
     )]
@@ -252,8 +252,10 @@ mod tests {
         ));
         // Squared error of the first 8 columns (the important ones).
         let err = |back: &[f32]| -> f32 {
-            v.chunks_exact(64)
-                .zip(back.chunks_exact(64))
+            v.as_chunks::<64>()
+                .0
+                .iter()
+                .zip(back.as_chunks::<64>().0)
                 .map(|(a, b)| {
                     a[..8]
                         .iter()

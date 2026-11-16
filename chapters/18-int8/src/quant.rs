@@ -80,7 +80,7 @@ pub fn quantize(
     let mut blocks = Vec::with_capacity(rows * cols / BLOCK);
     for row in values.chunks_exact(cols) {
         let row_scale = absmax_scale(row);
-        for chunk in row.chunks_exact(BLOCK) {
+        for chunk in row.as_chunks::<BLOCK>().0 {
             let scale = match granularity {
                 Granularity::PerTensor => tensor_scale,
                 Granularity::PerRow => row_scale,
@@ -98,7 +98,7 @@ pub fn quantize_activations(x: &[f32], k: usize, per_token: bool, out: &mut Vec<
     out.clear();
     for row in x.chunks_exact(k) {
         let row_scale = absmax_scale(row);
-        for chunk in row.chunks_exact(BLOCK) {
+        for chunk in row.as_chunks::<BLOCK>().0 {
             let scale = if per_token {
                 row_scale
             } else {
@@ -122,7 +122,7 @@ pub fn relative_error(a: &[f32], b: &[f32]) -> f64 {
 /// Dequantizes a whole matrix of blocks.
 pub fn dequantize(blocks: &[BlockQ8]) -> Vec<f32> {
     let mut out = vec![0.0; blocks.len() * BLOCK];
-    for (b, o) in blocks.iter().zip(out.chunks_exact_mut(BLOCK)) {
+    for (b, o) in blocks.iter().zip(out.as_chunks_mut::<BLOCK>().0) {
         b.dequantize(o);
     }
     out

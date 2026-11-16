@@ -210,7 +210,7 @@ fn four_rows() {
             black_box(&y);
         });
         let four = measure(1, 4, || {
-            for (quad, out) in w.chunks_exact(4 * k).zip(y.chunks_exact_mut(4)) {
+            for (quad, out) in w.chunks_exact(4 * k).zip(y.as_chunks_mut::<4>().0) {
                 let (a, rest) = quad.split_at(k);
                 let (b, rest) = rest.split_at(k);
                 let (c, d) = rest.split_at(k);

@@ -420,7 +420,7 @@ pub fn sum_strided(view: &TensorView<'_>) -> f32 {
 }
 
 #[cfg(test)]
-#[expect(
+#[allow(
     clippy::float_cmp,
     reason = "views only move integers around, so values must match exactly"
 )]
@@ -431,7 +431,7 @@ mod tests {
     fn strides_are_row_major() {
         assert_eq!(contiguous_strides(&[2, 3, 4]), vec![12, 4, 1]);
         assert_eq!(contiguous_strides(&[5]), vec![1]);
-        assert!(contiguous_strides(&[]).is_empty());
+        assert_eq!(contiguous_strides(&[]), []);
     }
 
     #[test]

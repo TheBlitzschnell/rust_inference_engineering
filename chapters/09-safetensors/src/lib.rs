@@ -416,14 +416,18 @@ impl<'a> TensorView<'a> {
     pub fn to_f32_vec(&self) -> Result<Vec<f32>, Error> {
         let pairs = || {
             self.data
-                .chunks_exact(2)
-                .map(|b| u16::from_le_bytes([b[0], b[1]]))
+                .as_chunks::<2>()
+                .0
+                .iter()
+                .map(|&b| u16::from_le_bytes(b))
         };
         match self.dtype {
             Dtype::F32 => Ok(self
                 .data
-                .chunks_exact(4)
-                .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|&b| f32::from_le_bytes(b))
                 .collect()),
             Dtype::BF16 => Ok(pairs().map(|u| Bf16::from_bits(u).to_f32()).collect()),
             Dtype::F16 => Ok(pairs().map(|u| F16::from_bits(u).to_f32()).collect()),

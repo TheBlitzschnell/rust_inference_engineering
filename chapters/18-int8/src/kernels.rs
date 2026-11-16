@@ -74,10 +74,10 @@ pub fn dot_q8_f32_with(kernels: Kernels, w: &[BlockQ8], x: &[f32]) -> Option<f32
 
 pub fn dot_q8_f32_portable(w: &[BlockQ8], x: &[f32]) -> f32 {
     let mut total = 0.0;
-    for (b, xs) in w.iter().zip(x.chunks_exact(BLOCK)) {
+    for (b, xs) in w.iter().zip(x.as_chunks::<BLOCK>().0) {
         // Eight running sums, so the compiler can vectorize.
         let mut sums = [0.0f32; 8];
-        for (q8, x8) in b.q.chunks_exact(8).zip(xs.chunks_exact(8)) {
+        for (q8, x8) in b.q.as_chunks::<8>().0.iter().zip(xs.as_chunks::<8>().0) {
             for lane in 0..8 {
                 sums[lane] += f32::from(q8[lane]) * x8[lane];
             }
@@ -161,7 +161,7 @@ pub mod x86 {
     pub fn dot_q8_f32_avx512(w: &[BlockQ8], x: &[f32]) -> f32 {
         assert_eq!(x.len(), w.len() * BLOCK, "x must have 64 values per block");
         let mut total = _mm512_setzero_ps();
-        for (b, xs) in w.iter().zip(x.chunks_exact(BLOCK)) {
+        for (b, xs) in w.iter().zip(x.as_chunks::<BLOCK>().0) {
             let mut acc = _mm512_setzero_ps();
             for part in 0..4 {
                 // SAFETY: 16 bytes at 16 * part are inside the 64-byte `q`,
@@ -193,7 +193,7 @@ pub mod x86 {
     pub fn dot_q8_f32_avx2(w: &[BlockQ8], x: &[f32]) -> f32 {
         assert_eq!(x.len(), w.len() * BLOCK, "x must have 64 values per block");
         let mut total = _mm256_setzero_ps();
-        for (b, xs) in w.iter().zip(x.chunks_exact(BLOCK)) {
+        for (b, xs) in w.iter().zip(x.as_chunks::<BLOCK>().0) {
             let mut acc = [_mm256_setzero_ps(); 2];
             for part in 0..8 {
                 // SAFETY: 8 bytes at 8 * part are inside `q`, 8 floats at

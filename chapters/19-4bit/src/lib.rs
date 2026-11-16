@@ -156,7 +156,7 @@ impl Matrix for Q4Matrix {
         let per_row = self.cols / BLOCK;
         for (b, o) in self.blocks[r * per_row..(r + 1) * per_row]
             .iter()
-            .zip(out.chunks_exact_mut(BLOCK))
+            .zip(out.as_chunks_mut::<BLOCK>().0)
         {
             b.dequantize(o);
         }

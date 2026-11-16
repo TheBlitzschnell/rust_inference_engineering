@@ -397,7 +397,7 @@ impl<W: Matrix> Engine<W> {
     /// policy's order. Makes sure every planned request has blocks for its
     /// tokens, evicting from the prefix cache and then preempting the
     /// newest requests if needed.
-    #[expect(
+    #[allow(
         clippy::needless_range_loop,
         reason = "the decode loop preempts other requests by index while it runs"
     )]

@@ -105,7 +105,7 @@ impl Matrix for PackedBf16 {
             }
         });
         for (block, results) in scratch.chunks_exact(per_block).enumerate() {
-            for (r, sums) in results.chunks_exact(LANES).enumerate() {
+            for (r, sums) in results.as_chunks::<LANES>().0.iter().enumerate() {
                 y[r * n + block * LANES..][..LANES].copy_from_slice(sums);
             }
         }
