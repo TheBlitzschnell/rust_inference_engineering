@@ -18,7 +18,6 @@ futures-util.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
-tokio-stream.workspace = true
 
 # Used by the demo (src/main.rs) only.
 ch17-profiling = { path = "../17-profiling" }
