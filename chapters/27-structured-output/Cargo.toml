@@ -1,0 +1,26 @@
+[package]
+name = "ch27-structured-output"
+version = "0.1.0"
+description = "Chapter 27: grammar-constrained decoding that always produces valid JSON"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+ch07-threads = { path = "../07-threads" }
+ch14-kv-cache = { path = "../14-kv-cache" }
+ch15-sampling = { path = "../15-sampling" }
+
+# Used by the demo (src/main.rs) only.
+ch09-safetensors = { path = "../09-safetensors" }
+ch16-real-model = { path = "../16-real-model" }
+ch17-profiling = { path = "../17-profiling" }
+ch23-continuous-batching = { path = "../23-continuous-batching" }
+serde_json.workspace = true
+
+[dev-dependencies]
+ch13-transformer = { path = "../13-transformer" }
+
+[lints]
+workspace = true

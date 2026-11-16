@@ -144,7 +144,7 @@ Initial weights are random, scaled by √(2/in). A ReLU layer with that scale ke
                     relu(row);
                 }
             }
-            std::mem::swap(&mut input, &mut output);
+            (input, output) = (output, input);
         }
         &input[..batch * self.output_dim()]
 ```
@@ -152,7 +152,7 @@ Initial weights are random, scaled by √(2/in). A ReLU layer with that scale ke
 Line by line:
 
 - `let Workspace { a, b, .. } = ws;` **destructures** the `&mut Workspace` into two separate `&mut Vec<f32>` borrows, one per field. The borrow checker understands that different fields of a struct are different memory, so holding `&mut a` and `&mut b` at the same time is allowed. (Calling two `&mut self` methods to get them would not be.)
-- `input` and `output` are those two mutable references. `std::mem::swap(&mut input, &mut output)` swaps the *references*, not the buffers: after each layer, the buffer just written becomes the next layer's input. No data is copied.
+- `input` and `output` are those two mutable references. `(input, output) = (output, input)` swaps the *references*, not the buffers: after each layer, the buffer just written becomes the next layer's input. No data is copied.
 - `&input[..batch * layer.in_dim]` takes only the part of the buffer this layer uses; the buffers are sized for the widest layer.
 - `matmul_nt_pool` is chapter 7's parallel NT product. Passing `pool` in (rather than creating threads inside) lets the caller decide how many threads each forward pass uses, which is exactly what part 2 varies.
 - The bias add and ReLU run row by row over the batch. `relu` is chapter 8's in-place operator.

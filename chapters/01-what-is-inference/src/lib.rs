@@ -158,7 +158,7 @@ pub fn summarize(samples: &mut [Duration]) -> LatencySummary {
 /// Uses the "nearest rank" definition: the smallest sample such that at
 /// least `p` percent of samples are less than or equal to it.
 pub fn percentile(sorted: &[Duration], p: f64) -> Duration {
-    assert!(!sorted.is_empty());
+    assert!(!sorted.is_empty(), "percentile of nothing");
     assert!((0.0..=100.0).contains(&p));
     let rank = (p / 100.0 * sorted.len() as f64).ceil() as usize;
     sorted[rank.clamp(1, sorted.len()) - 1]

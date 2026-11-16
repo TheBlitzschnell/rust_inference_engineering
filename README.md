@@ -130,7 +130,7 @@ Every number in the lessons was measured, not estimated, on this machine:
 
 - Intel Xeon cloud VM (Sapphire Rapids generation, 2.1 GHz), **4 vCPUs**, 15 GB RAM, Linux
 - Supports AVX2, FMA and AVX-512. L2 cache 2 MB per core
-- Rust 1.94.1, release builds, no `-C target-cpu=native` unless a lesson says otherwise
+- Rust 1.94.1 (chapters 1-24) and 1.97.0 (chapters 25-30), release builds, no `-C target-cpu=native` unless a lesson says otherwise
 
 A shared cloud VM is noisy: expect run-to-run variation of 5-10%, sometimes more. Your machine will give different numbers. The lessons are about the *shape* of the results (what gets faster, by roughly how much, and why), and each lesson explains how to read your own numbers.
 

@@ -219,7 +219,8 @@ impl Rope {
         let sin = &self.sin[pos * half..(pos + 1) * half];
         match self.layout {
             RopeLayout::Interleaved => {
-                for (pair, (&c, &s)) in x.chunks_exact_mut(2).zip(cos.iter().zip(sin)) {
+                for (pair, (&c, &s)) in x.as_chunks_mut::<2>().0.iter_mut().zip(cos.iter().zip(sin))
+                {
                     let (a, b) = (pair[0], pair[1]);
                     pair[0] = a * c - b * s;
                     pair[1] = a * s + b * c;
@@ -341,7 +342,9 @@ mod tests {
         let gqa = run(&q, &k, &v, HEADS, 0, true);
         // Expand 2 KV heads to 4 by repeating each for its group of 2.
         let expand = |x: &[f32]| -> Vec<f32> {
-            x.chunks_exact(16)
+            x.as_chunks::<16>()
+                .0
+                .iter()
                 .flat_map(|tok| {
                     let (h0, h1) = tok.split_at(8);
                     [h0, h0, h1, h1].concat()

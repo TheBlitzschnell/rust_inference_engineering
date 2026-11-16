@@ -126,8 +126,10 @@ impl<'a> Checkpoint<'a> {
     fn vector(&mut self, name: &str, len: usize) -> Result<Vec<f32>, Error> {
         let bytes = self.bytes(name, &[len])?;
         Ok(bytes
-            .chunks_exact(2)
-            .map(|b| Bf16::from_bits(u16::from_le_bytes([b[0], b[1]])).to_f32())
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|&b| Bf16::from_bits(u16::from_le_bytes(b)).to_f32())
             .collect())
     }
 
@@ -155,8 +157,10 @@ impl<'a> Checkpoint<'a> {
     fn f32(&mut self, name: &str, rows: usize, cols: usize) -> Result<DenseF32, Error> {
         let bytes = self.bytes(name, &[rows, cols])?;
         let values: Vec<f32> = bytes
-            .chunks_exact(2)
-            .map(|b| Bf16::from_bits(u16::from_le_bytes([b[0], b[1]])).to_f32())
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|&b| Bf16::from_bits(u16::from_le_bytes(b)).to_f32())
             .collect();
         Ok(DenseF32::new(&values, rows, cols))
     }

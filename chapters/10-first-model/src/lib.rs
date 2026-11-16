@@ -231,7 +231,7 @@ impl Mlp {
                     relu(row);
                 }
             }
-            std::mem::swap(&mut input, &mut output);
+            (input, output) = (output, input);
         }
         &input[..batch * self.output_dim()]
     }

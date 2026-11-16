@@ -170,7 +170,7 @@ mod tests {
         assert_eq!(cache.lookup(&mut pool, &third, 1).len(), 1);
         // A different first token: nothing, even with equal later blocks.
         let fourth = [9, 1, 2, 3, 4, 5, 6, 7];
-        assert!(cache.lookup(&mut pool, &fourth, 9).is_empty());
+        assert_eq!(cache.lookup(&mut pool, &fourth, 9), []);
     }
 
     #[test]

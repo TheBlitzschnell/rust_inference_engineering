@@ -294,7 +294,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
- "tokio-stream",
 ]
 
 [[package]]
@@ -327,6 +326,100 @@ dependencies = [
  "ch20-flash-attention",
  "ch21-engine-thread",
  "ch23-continuous-batching",
+]
+
+[[package]]
+name = "ch25-scheduling"
+version = "0.1.0"
+dependencies = [
+ "ch07-threads",
+ "ch13-transformer",
+ "ch14-kv-cache",
+ "ch15-sampling",
+ "ch16-real-model",
+ "ch17-profiling",
+ "ch20-flash-attention",
+ "ch21-engine-thread",
+ "ch23-continuous-batching",
+ "ch24-paged-kv-cache",
+ "futures-util",
+ "tokio",
+]
+
+[[package]]
+name = "ch26-speculative-decoding"
+version = "0.1.0"
+dependencies = [
+ "ch07-threads",
+ "ch09-safetensors",
+ "ch13-transformer",
+ "ch14-kv-cache",
+ "ch15-sampling",
+ "ch16-real-model",
+ "ch17-profiling",
+ "ch18-int8",
+ "ch19-4bit",
+ "ch23-continuous-batching",
+]
+
+[[package]]
+name = "ch27-structured-output"
+version = "0.1.0"
+dependencies = [
+ "ch07-threads",
+ "ch09-safetensors",
+ "ch13-transformer",
+ "ch14-kv-cache",
+ "ch15-sampling",
+ "ch16-real-model",
+ "ch17-profiling",
+ "ch23-continuous-batching",
+ "serde_json",
+]
+
+[[package]]
+name = "ch28-parallelism"
+version = "0.1.0"
+dependencies = [
+ "ch02-numbers",
+ "ch07-threads",
+ "ch08-operators",
+ "ch13-transformer",
+ "ch14-kv-cache",
+ "ch15-sampling",
+ "ch16-real-model",
+ "ch17-profiling",
+ "ch23-continuous-batching",
+]
+
+[[package]]
+name = "ch29-gpu"
+version = "0.1.0"
+dependencies = [
+ "ch08-operators",
+ "ch14-kv-cache",
+ "ch16-real-model",
+]
+
+[[package]]
+name = "ch30-production"
+version = "0.1.0"
+dependencies = [
+ "ch07-threads",
+ "ch08-operators",
+ "ch09-safetensors",
+ "ch13-transformer",
+ "ch14-kv-cache",
+ "ch15-sampling",
+ "ch16-real-model",
+ "ch17-profiling",
+ "ch19-4bit",
+ "ch21-engine-thread",
+ "ch23-continuous-batching",
+ "ch24-paged-kv-cache",
+ "ch25-scheduling",
+ "ch28-parallelism",
+ "serde_json",
 ]
 
 [[package]]
@@ -404,12 +497,6 @@ dependencies = [
  "quote",
  "syn",
 ]
-
-[[package]]
-name = "futures-sink"
-version = "0.3.34"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1944426bf7d03f1d14f708785e4b33efd750b36d48a157b836b3efc15ede8e1d"
 
 [[package]]
 name = "futures-task"
@@ -797,31 +884,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "tokio-stream"
-version = "0.1.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3d06f0b082ba57c26b79407372e57cf2a1e28124f78e9479fe80322cf53420b"
-dependencies = [
- "futures-core",
- "pin-project-lite",
- "tokio",
- "tokio-util",
-]
-
-[[package]]
-name = "tokio-util"
-version = "0.7.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "494815d09bf52b5548659851081238f0ca39ff638363907596da739561c62c52"
-dependencies = [
- "bytes",
- "futures-core",
- "futures-sink",
- "pin-project-lite",
- "tokio",
 ]
 
 [[package]]

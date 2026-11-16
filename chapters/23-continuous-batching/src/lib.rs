@@ -214,7 +214,7 @@ mod tests {
         let mut stopping = request(p, 10);
         stopping.stop_tokens = vec![first[0]];
         let (tokens, summary) = collect(handle.submit(stopping).unwrap()).unwrap();
-        assert!(tokens.is_empty());
+        assert_eq!(tokens, []);
         assert_eq!(summary.finish, FinishReason::StopToken);
         assert!(collect(handle.submit(request(prompt(200, 5), 4)).unwrap()).is_err());
     }

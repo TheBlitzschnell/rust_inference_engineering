@@ -125,7 +125,7 @@ fn inspect(path: &std::path::Path) {
         *by_dtype.entry(info.dtype.name()).or_default() += 1;
         let start = st.data_offset() + info.start;
         for (slot, align) in aligned.iter_mut().zip([2, 4, 64]) {
-            if start % align == 0 {
+            if start.is_multiple_of(align) {
                 *slot += 1;
             }
         }

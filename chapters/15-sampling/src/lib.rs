@@ -476,7 +476,7 @@ pub fn generate<W: Matrix>(
 }
 
 #[cfg(test)]
-#[expect(
+#[allow(
     clippy::float_cmp,
     reason = "the penalties are exact on these small values"
 )]

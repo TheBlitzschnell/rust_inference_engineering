@@ -202,6 +202,13 @@ impl Tokenizer {
             .collect()
     }
 
+    /// Whether `id` is a special token (markup such as `<|im_end|>`, which
+    /// stands for its text only when the model emits it). Chapter 27 keeps
+    /// them out of constrained text.
+    pub fn is_special(&self, id: u32) -> bool {
+        self.specials.iter().any(|&(_, s)| s == id)
+    }
+
     /// The id of the token for exactly this text, if there is one.
     pub fn token_id(&self, text: &str) -> Option<u32> {
         self.vocab.get(text.as_bytes()).copied()

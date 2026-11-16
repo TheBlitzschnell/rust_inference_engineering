@@ -126,7 +126,7 @@ fn calibrate(dir: &Path) -> Vec<Vec<f32>> {
     let mut pool = SpinPool::with_all_cores();
     let mut cache = KvCache::new(&model.config, 512);
     let mut scratch = Scratch::new(&model.config, 512, 512);
-    for window in tokens[4096..6144].chunks_exact(512) {
+    for window in tokens[4096..6144].as_chunks::<512>().0 {
         cache.clear();
         model.forward_all(&mut pool, window, &mut cache, &mut scratch);
     }
