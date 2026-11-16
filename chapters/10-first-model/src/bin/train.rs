@@ -36,6 +36,6 @@ fn main() {
     std::fs::create_dir_all(path.parent().expect("model path has a parent"))
         .expect("create models/");
     model.save(&path).expect("write model file");
-    let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+    let size = std::fs::metadata(&path).map_or(0, |m| m.len());
     println!("saved {} ({size} bytes)", path.display());
 }
