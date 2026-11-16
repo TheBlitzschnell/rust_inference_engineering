@@ -394,6 +394,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch29-gpu"
+version = "0.1.0"
+dependencies = [
+ "ch08-operators",
+ "ch14-kv-cache",
+ "ch16-real-model",
+]
+
+[[package]]
 name = "crossbeam-deque"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
